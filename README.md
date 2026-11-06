@@ -1,54 +1,128 @@
-# Hamyon AI — PyCharm uchun
+# Hamyon AI
 
-Telegram orqali shaxsiy xarajat, daromad, qarz/to‘lov va hisobotlarni yuritadigan modul bot. **Shaxsiy ma'lumotlar izolyatsiyasi** har bir so‘rovda Telegram foydalanuvchisi ID si bilan DB query filtrlash orqali ta'minlanadi. Haqiqiy tokenlar, qarzlar yoki seed yozuvlar loyihaga kiritilmagan.
+Hamyon AI — Telegram bot orqali shaxsiy daromad, xarajat, qarz va eslatmalarni yuritish vositasi. Bot yozuvni avtomatik saqlamaydi: AI tahlil qilgan ma’lumot avval ko‘rsatiladi, foydalanuvchi tekshirib tasdiqlagandan keyingina bazaga yoziladi.
 
-## Muammo tahlili va yechimlar
+Har bir yozuv Telegram foydalanuvchisining ichki ID’siga bog‘langan. Bot bank hisobiga ulanmaydi va bankdagi haqiqiy balansni ko‘ra olmaydi; hisobotlar faqat botga kiritilgan yozuvlar asosida tuziladi.
 
-Chat eksportida AI parse va `/savol` API xatolari, `/daromad`ning xarajat formatini ko‘rsatishi, `so'm` kategoriyaga yozilishi, `/pay`ning chalkashligi ko‘rindi. Bu relizda manual tranzaksiya AI dan mustaqil ishlaydi; AI xatosida tushunarli diagnostika/log bor; daromad va xarajat komandalarida alohida handler; valyuta so‘zi kategoriya sanitizatsiyasidan o‘tadi; `/pay` qarzni tugma orqali tanlaydi, to‘liq to‘lashni bir bosishda, qisman to‘lovni `/pay_sum ID SUMMA` bilan bajaradi.
+## O‘rnatish va ishga tushirish
 
-## PyCharm/macOS ishga tushirish
+Python 3.11–3.14 kerak; Python 3.13 tavsiya etiladi. macOS’da loyiha papkasini PyCharm’da ochib, terminalda quyidagilarni bajaring:
 
-1. ZIPni ochib PyCharm’da `hamyon-ai` papkasini **Open** qiling. Python 3.13 interpreter tanlang (3.15 hozircha pydantic-core build’ini qo‘llamaydi).
-2. PyCharm Terminal: `python3 -m venv .venv` va `source .venv/bin/activate`
-3. `python -m pip install -e '.[dev]'`
-4. `.env.example` nusxasini `.env` deb o‘zgartiring; BotFather tokenini `TELEGRAM_BOT_TOKEN` ga kiriting. AI kerak bo‘lsa OpenRouter’da hisob ochib, bepul API key yarating va `AI_API_KEY` ga kiriting. `AI_BASE_URL` va `AI_MODEL` ni default qiymatda qoldiring (`https://openrouter.ai/api/v1`, `openrouter/free`). Oddiy matn/rasm AI ishlaydi; ovoz transkripsiyasi default o‘chirilgan, chunki u alohida STT modeliga va hisoblanadigan usage’ga bog‘liq bo‘lishi mumkin. Hech qachon kalitni chat yoki gitga yubormang. OpenAI kalitidan foydalanmoqchi bo‘lsangiz, `AI_API_KEY` ni bo‘sh qoldirib `OPENAI_API_KEY` ni to‘ldiring.
-5. `python -m app`
+```bash
+python3.13 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e '.[dev]'
+cp .env.example .env
+```
 
-Birinchi ishga tushishda SQLite `data/hamyon.db` avtomatik yaratiladi. PyCharm Run Configuration’da working directory loyiha ildizi bo‘lsin.
+`.env` faylida `TELEGRAM_BOT_TOKEN` o‘rniga BotFather tokenini kiriting. Botni ishga tushirish:
 
-## Asosiy foydalanish
+```bash
+python -m app
+```
 
-- `/xarajat 45000 ovqat tushlik` yoki `/daromad 5000000 oylik` — tasdiqlash tugmasidan keyin saqlanadi. `so‘m`, `UZS` yoki `sum` yolg‘iz qolsa `Boshqa` kategoriya bo‘ladi.
-- Qarz haqida oddiy gap yozing (masalan, `TBC Osmon kartaga 9-noyabrda 2 mln so‘m to‘lashim kerak`) yoki `/qarz` dan keyin yozing. Bot nom, summa va sanani tahlil qilib, tasdiqlashdan keyin saqlaydi. Shuningdek: `/qarzlar`, `/pay`, `/pay_sum ID SUMMA`, `/qarz_ozgartir`, `/qarz_ochir`
-- `/hisobot`, `/limit SUMMA`, `/oxirgi`, `/ochir ID`, `/ozgartir ID SUMMA KATEGORIYA IZOH`. Istalgan savolni oddiy xabar qilib yuboring; `/savol` ixtiyoriy.
-- `/eslatma YYYY-MM-DD HH:MM MATN`, `/eslatmalar`, `/ochireslatma ID`
-- Tugmalar asosiy menyu, qarz tanlash va tasdiqlashni ko‘rsatadi.
+PyCharm Run Configuration ishlatilsa, **Working directory** loyiha ildizi bo‘lsin. Birinchi ishga tushishda SQLite bazasi `data/hamyon.db` faylida yaratiladi. `.env` faylini hech qachon GitHub’ga yuklamang; u `.gitignore` ichida chiqarib tashlangan.
 
-## BotFather profil materiallari
+## AI sozlamalari
 
-`assets/BOTFATHER_PROFILE_UZ.md` ichida BotFather uchun About, Description va `/setcommands` matnlari bor. `assets/hamyon-ai-logo.png` ni bot rasmi, `assets/hamyon-ai-description.png` ni profil tavsif rasmi sifatida yuklang. `assets/hamyon-ai-welcome.gif` `/start` bilan yuboriladigan qisqa animatsiya. Maxfiylik siyosati sahifasi `assets/privacy-policy-uz.html` ichida; BotFather’ga kiritishdan oldin uni HTTPS manzilga joylashtirib, bot egasining aloqa ma’lumotini to‘ldiring.
+Matnli AI tahlili va chek rasmini o‘qish uchun `.env` da `AI_API_KEY` va ishlatiladigan modelni sozlang. Standart provayder OpenRouter:
 
-Ovozli xabarni matnga aylantirish uchun `.env` dagi `AI_TRANSCRIBE_MODEL` ga mavjud transkripsiya modelini kiriting. Bu qiymat bo‘sh bo‘lsa, bot ovozni matnga aylantirmaydi; matn va rasm tahlili alohida ishlaydi.
+```env
+AI_BASE_URL=https://openrouter.ai/api/v1
+AI_MODEL=openrouter/free
+```
 
-## Postgres / Docker
+Tanlangan model rasm qabul qilishini provayderdan tekshiring. Ovozli xabarni matnga aylantirish uchun `AI_TRANSCRIBE_MODEL` ga provayder qo‘llaydigan transkripsiya modelini kiriting. Bu maydon bo‘sh bo‘lsa, ovozli xabar tahlil qilinmaydi. Rasm va audio modellari uchun kvota yoki alohida to‘lov talab qilinishi mumkin. AI ishlamasa, bot xatoni bildiradi; summani `/xarajat` yoki `/daromad` orqali qo‘lda kiritish mumkin.
 
-`.env` dagi `POSTGRES_PASSWORD` qiymatini o‘zgartiring, so‘ng `docker compose up --build -d`. Compose bot uchun Postgres ulanishini avtomatik sozlaydi. `docker-compose.yml` Postgres va botni ko‘taradi. SQLite lokal ishlab chiqish uchun; production’da Postgres tavsiya etiladi.
+OpenAI sozlamasidan foydalanilsa, `AI_API_KEY` ni bo‘sh qoldirib `OPENAI_API_KEY` ni to‘ldiring. Token va API kalitlarini chat, README yoki git repozitoriyga yozmang.
 
-## Migratsiya
+## Daromad va xarajat
 
-Versiyalangan migratsiyalar Alembic’da. Joriy kod ilk startda schema’ni yaratadi (yangi local install uchun qulay). Mavjud production DB’ni keyingi relizlarda o‘zgartirishda `alembic revision --autogenerate -m '...'`, so‘ng `alembic upgrade head` ishlating. Migratsiya konfiguratsiyasi uchun `DATABASE_URL` ni Alembicga ulash zarur.
+Yozuvni menyudagi **➕ Xarajat** yoki **➕ Daromad** tugmasidan, buyruqdan yoki oddiy xabardan boshlash mumkin:
 
-## Test va sifat
+```text
+Benzinga 200 ming ketdi
+Bugun 500 ming ishlab topdim
+Tushlikka 45 ming to‘ladim
+```
 
-`pytest -q` — valyuta kategoriyasi, income kind, qisman/full payment limit logic. `ruff check app tests` (ruff optional). OpenRouter’da bepul model 20 so‘rov/daqiqada va 50 so‘rov/kunda bilan cheklanishi mumkin; limit tugasa keyingi kunni kuting. So‘rov matni tanlangan model provayderiga uzatiladi, shuning uchun parol, karta raqami yoki o‘ta maxfiy moliyaviy ma’lumot yubormang.
+Buyruqlar:
 
-## Hamyon Mini App, eslatma, media
+- `/xarajat 45000 ovqat tushlik` — xarajat kiritish.
+- `/daromad 5000000 oylik` — daromad kiritish.
+- `/oxirgi` — oxirgi yozuvlarni ko‘rish.
+- `/ozgartir ID SUMMA KATEGORIYA IZOH` — yozuvni tahrirlash; yozuv turi saqlanib qoladi.
+- `/ochir ID` — yozuvni o‘chirish.
+- `/limit 1500000` — oylik xarajat limitini belgilash; `/limit 0` limitni o‘chiradi.
 
-Inline va reply keyboard interfeyslari botda mavjud. Telegram Mini App uchun domenli HTTPS hosting va WebApp backend autentifikatsiyasi kerak; shuning uchun offline ZIP ichida production Mini App yo‘q. Chek rasmini AI orqali parse qilish mavjud va tasdiqlashdan o‘tadi. Ovoz handleri bor, lekin bepul rejimda AI_TRANSCRIBE_MODEL belgilanmaguncha o‘chiq. Shaxsiy eslatmalar DB’da saqlanadi va sozlangan timezone bo‘yicha scheduler yuboradi. Xarajat limitidan oshgan yozuv tasdiqlansa, bot oshgan miqdorni ko‘rsatadi. Tranzaksiya va qarzlarni tahrirlash/o‘chirish user scope bilan bajariladi. Scheduler bir bot worker bilan ishlaydi. AI yozuvni hech qachon avtomatik saqlamaydi; foydalanuvchi tasdiqlashi shart. Oddiy savollar AI ga bevosita yuboriladi; `/savol` majburiy emas.
+Har bir yangi yozuvdan oldin bot summa, turi, kategoriya, izoh va sanani ko‘rsatadi. Tasdiqlash oynasida summani, kategoriyani yoki izohni o‘zgartirish, yoxud bekor qilish mumkin. AI tahlili muvaffaqiyatsiz yoki noaniq bo‘lsa, yozuv avtomatik saqlanmaydi. Buyruq bilan raqamdan boshlangan sodda yozuvlar AI xizmatisiz ham tahlil qilinishi mumkin; erkin matn, rasm va ovoz uchun sozlangan AI kerak.
 
-## Xavfsizlik va chegaralar
+## Hisobot
 
-- API xatolarida kalit chiqarilmaydi; server logida exception turi ko‘rsatiladi. Rate limit user ID bo‘yicha (bitta jarayon xotirasida).
-- DB querylar user scope bilan cheklangan. To‘lov miqdori qoldiqdan oshmaydi.
-- Bot bankdagi hisoblarni ko‘rmaydi; hisobot faqat foydalanuvchi kiritgan ma'lumot.
-- Telegram polling uchun bir bot tokeni bilan faqat bitta jarayon ishlating.
+- `/hisobot` — joriy oy daromadi, xarajati, farqi va limit holati.
+- `/hisobot kun` — bugungi hisob.
+- `/hisobot hafta` — dushanbadan bugungacha bo‘lgan hisob.
+- `/hisobot kategoriya` — shu oy xarajatlarini kategoriya bo‘yicha.
+
+Hisobotni menyudagi **📊 Hisobot** tugmasidan ham ochish mumkin. Oddiy xabarda hisobot yoki balans haqida so‘ralsa, bot AI’dan raqamlarni taxmin qildirmaydi; ma’lumotni bazadan hisoblab chiqaradi. Ko‘rsatilgan farq bank balansi emas.
+
+## Qarzlar va to‘lovlar
+
+Qarz haqida oddiy gap yozing, masalan:
+
+```text
+TBC Osmon kartaga 9-noyabrda 2 mln so‘m to‘lashim kerak
+```
+
+Bot topilgan nom, summa va sanani ko‘rsatadi. Qarz faqat tasdiqdan keyin saqlanadi.
+
+- `/qarzlar` — ochiq qarzlarni ko‘rish.
+- `/pay` — qarzni tanlash va to‘lovni belgilash.
+- `/pay_sum ID SUMMA` — qisman to‘lov kiritish, masalan `/pay_sum 2 100000`.
+- `/qarz_ozgartir ID YYYY-MM-DD SUMMA NOMI` — qarzni tahrirlash.
+- `/qarz_ochir ID` — qarz va uning to‘lov tarixini o‘chirish.
+
+To‘lov summasi qarz qoldig‘idan oshirilmaydi. Qarz to‘lovi daromad/xarajat hisobotiga alohida tranzaksiya sifatida qo‘shilmaydi; hisobotda ochiq qarz qoldig‘i ko‘rsatiladi.
+
+## Eslatmalar va yordamchi xabarlar
+
+Shaxsiy eslatmalar:
+
+- `/eslatma YYYY-MM-DD HH:MM MATN` — eslatma qo‘shish.
+- `/eslatmalar` — eslatmalar ro‘yxati.
+- `/ochireslatma ID` — eslatmani o‘chirish.
+
+Bot, shuningdek, oxirgi faollikdan uch kun o‘tgach eslatma yuborishi mumkin; takroriy faollik eslatmasi haftasiga ko‘pi bilan bir marta yuboriladi. To‘lov muddati yaqin qarzlar va limitning 80 foiziga yetgan xarajatlar haqida kunlik ogohlantirish beriladi. Xabarlar `TIMEZONE` bo‘yicha `ENGAGEMENT_NUDGE_HOUR` vaqtidan keyin tekshiriladi (standart — 19:00, `Asia/Tashkent`). Eski bazalarda dastlabki faollik oxirgi saqlangan daromad/xarajat, qarz yoki akkaunt yaratilgan vaqtdan taxmin qilinadi.
+
+`/savol MATN` yoki oddiy xabar bilan AI yordamchisidan so‘rash mumkin. AI’ga savol bilan birga faqat shu foydalanuvchining joriy oy jami, kategoriya yig‘indisi va ochiq qarz qoldig‘i beriladi. So‘rovlar sozlangan AI provayderiga uzatiladi; maxfiy ma’lumotlarni yubormang. `/start` menyu va boshlang‘ich xabarni ko‘rsatadi, `/help` buyruqlarni chiqaradi.
+
+## Docker va PostgreSQL
+
+`.env` ichida `POSTGRES_PASSWORD` ni o‘zgartirib, loyiha ildizida ishga tushiring:
+
+```bash
+docker compose up --build -d
+```
+
+Compose PostgreSQL va bot konteynerlarini ishga tushiradi; SQLite lokal ishlab chiqish uchun mo‘ljallangan. SQLite bazasi `data/hamyon.db` da saqlanadi. PostgreSQL ma’lumotlari Docker volume’da saqlanadi. Zaxira nusxalarda moliyaviy ma’lumotlar bo‘ladi — ularni maxfiy saqlang.
+
+## Migratsiya va ishga tushirish tartibi
+
+Bot start vaqtida mavjud bo‘lmagan jadvallarni yaratadi. Alembic migratsiyalari `migrations/versions/` ichida saqlanadi; `alembic.ini` hozir lokal SQLite manziliga yo‘naltirilgan va `.env` dagi `DATABASE_URL` ni avtomatik olmaydi. PostgreSQL bazasiga migratsiya qo‘llashdan oldin Alembic ulanish manzilini moslang. Scheduler eslatma va yordamchi bildirishnomalarni yuboradi, shuning uchun bir xil bot tokeni bilan faqat **bitta** bot jarayonini ishga tushiring.
+
+## Tekshiruv
+
+Virtual muhit yoqilgan holda:
+
+```bash
+python -m pytest -q
+python -m compileall -q app migrations tests
+```
+
+## Chegaralar va xavfsizlik
+
+- Bot bank hisoblarini ko‘rmaydi, pul o‘tkazmaydi va bank bilan avtomatik sinxronlanmaydi.
+- Hisobotlar faqat foydalanuvchi kiritgan ma’lumotlarga asoslanadi.
+- Ma’lumotlar bazasi so‘rovlari foydalanuvchi ID’si bilan chegaralanadi.
+- Karta raqami, PIN, CVV, parol yoki API kalitini botga yubormang.
+- Telegram yoki AI xizmati tarmog‘i ishlamasa, bot ma’lumotni avtomatik saqlamaydi; xizmat tiklangach qayta urinib ko‘ring yoki tranzaksiyani qo‘lda kiriting.
